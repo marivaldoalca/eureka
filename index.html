@@ -198,6 +198,7 @@ body.dark-mode button:hover {
 		<button id="startTimerBtn">Iniciar</button>
 		<button id="pauseTimerBtn">Pausar</button>
 		<button id="resetTimerBtn">Zerar</button>
+		<button id="reloadBtn">🔄</button>
 	</div>
 	
     <div><span id="teamBName">Equipe B </span>   🟨 <span id="teamBYellowCount">0</span> | 🟥 <span id="teamBRedCount">0</span></div>
@@ -649,6 +650,22 @@ document.getElementById('themeToggleBtn').addEventListener('click', () => {
   } else {
     icon.textContent = '🌙'; // modo escuro
   }
+});
+
+window.addEventListener('DOMContentLoaded', () => {
+  fetch('https://marivaldoalca.github.io/eureka/DADOS DA PARTIDA.xlsx')
+    .then(response => response.arrayBuffer())
+    .then(data => {
+      const workbook = XLSX.read(data, { type: 'array' });
+      carregarDadosExcel(workbook);
+    })
+    .catch(error => {
+      console.error('Erro ao carregar o arquivo Excel:', error);
+    });
+});
+
+document.getElementById('reloadBtn').addEventListener('click', () => {
+  location.reload();
 });
 
 </script>
