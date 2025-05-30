@@ -670,8 +670,49 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 document.getElementById('reloadBtn').addEventListener('click', () => {
-  location.reload();
+  // Limpar cookies
+  document.cookie.split(";").forEach(cookie => {
+    const eqPos = cookie.indexOf("=");
+    const name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
+    document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
+  });
+
+  // Limpar localStorage e sessionStorage
+  localStorage.clear();
+  sessionStorage.clear();
+
+  // Resetar variáveis usadas
+  teamA = { name: 'Equipe A', starters: [], subs: [], yellowCards: new Set(), redCards: new Set(), substitutedPlayers: new Set() };
+  teamB = { name: 'Equipe B', starters: [], subs: [], yellowCards: new Set(), redCards: new Set(), substitutedPlayers: new Set() };
+  selected = {};
+  lastSubstitution = null;
+  golsRegistrados = [];
+  timerSeconds = 0;
+  clearInterval(timer);
+  timer = null;
+
+  // Limpar elementos visuais
+  document.getElementById('teamAStarters').innerHTML = '';
+  document.getElementById('teamASubs').innerHTML = '';
+  document.getElementById('teamBStarters').innerHTML = '';
+  document.getElementById('teamBSubs').innerHTML = '';
+  document.getElementById('historyContainer').innerHTML = '<h3>Histórico de Substituições</h3><button id="clearHistoryBtn">Limpar Histórico</button>';
+  document.getElementById('goalsLog').innerHTML = '<h3 style="margin-bottom: 10px;">Gols da Partida</h3><button id="undoGoalBtn" style="position: absolute; top: 10px; right: 10px; font-size: 14px; font-weight: bold; background-color: #007bff; color: white; border: none; border-radius: 4px; padding: 6px 12px; cursor: pointer;">↩️ Desfazer último gol</button>';
+  document.getElementById('timerDisplay').textContent = "00:00";
+
+  // Recarregar planilha automaticamente
+  fetch('https://marivaldoalca.github.io/eureka/DADOS DA PARTIDA.xlsx')
+    .then(response => response.arrayBuffer())
+    .then(data => {
+      const workbook = XLSX.read(data, { type: 'array' });
+      carregarDadosExcel(workbook);
+    })
+    .catch(error => {
+      console.error('Erro ao recarregar o arquivo Excel:', error);
+    });
 });
+
+
 
 </script>
 </body>
