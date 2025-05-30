@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Controle de Substituições de Futebol</title>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    body { overflow-y: scroll; font-family: Arial, sans-serif; background: #f0f4f8; margin: 0; padding: 20px; color: #333; }
+    h1 { text-align: center; color: #004a99; margin:0; }
+    .container { max-width: 900px; margin: 0 auto; background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 0 15px rgba(0,0,0,0.1); }
+    .card-counts, .undo-container { height:40px; display: flex; justify-content: space-between; margin-bottom: 10px; background: #eef6ff; padding: 10px; border-radius: 6px; font-weight: bold; text-align: center; }
+    .timer-container { text-align: center; margin-bottom: 20px; }
+	
+    .timer {
+		font-size: 28px; 
+		font-weight: bold; 
+		margin-bottom: 10px; 
+		padding: 10px;
+		}
+		
+    .timer button, #fileInput, #clearHistoryBtn, #undoBtn {
+      font-size: 16px;
+      font-weight: bold;
+      margin: 5px;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+	
+    #startTimerBtn {
+		font-size: 16px;
+		font-weight:bold;
+		width:100px;
+		height:40px;
+		background-color: #28a745; 
+		color: white;
+		padding: 8px 16px; 
+		border-radius: 4px
+		margin: 5px;
+		cursor:pointer;
+	}
+	
+    #pauseTimerBtn {
+		width:100px; 
+		height:40px; 
+		background-color: #ffc107; 
+		color: black;
+		padding: 6px 12px; 
+		border-radius: 4px
+		}
+		
+    #resetTimerBtn { 
+		width:100px; 
+		height:40px;
+		background-color: #dc3545; 
+		color: white; 
+		padding: 6px 12px; 
+		border-radius: 
+		}
+		
+    #startTimerBtn:hover { background-color: #218838; }
+    #pauseTimerBtn:hover { background-color: #e0a800; }
+    #resetTimerBtn:hover { background-color: #c82333; }
+    #undoBtn { background-color: #007bff; color: white; }
+    #undoBtn:hover { background-color: #0056b3; }
+	
+    #timerDisplay {
+		width:100px;
+		background:red; 
+		padding: 8px; 
+		border-radius: 4px; 
+		display: inline-block; 
+		color: white;
+		font-family: bold;
+		font-size: 20px;
+	}
+	
+    .file-input-container { text-align: center; margin-bottom: 15px; }
+    .teams { display: flex; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+    .team { flex: 1 1 45%; border: 1px solid #ddd; border-radius: 6px; padding: 10px; background: #f9faff; }
+    .team h3 { margin-top: 0; margin-bottom: 10px; color: #002d66; }
+    ul.player-list { list-style: none; margin: 0; padding: 0; overflow-y: auto; border: 1px solid #ccc; border-radius: 4px; background: #fff; }
+    ul.player-list li { padding: 6px 10px; border-bottom: 1px solid #eee; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+    ul.player-list li:last-child { border-bottom: none; }
+    ul.player-list li.highlight-yellow { background-color: yellow; }
+    ul.player-list li.highlight-red { background-color: red; text-decoration: line-through; }
+    ul.player-list li.highlight-substituted { background-color: green; color: white; font-weight: bold; }
+    .card-icons { display: flex; gap: 5px; }
+    .card-icons span { width: 16px; height: 16px; border-radius: 2px; display: inline-block; cursor: pointer; border: 1px solid #aaa; }
+    .card-icons .yellow { background: #ffeb3b; }
+    .card-icons .red { background: #f44336; }
+    .history { margin-top: 20px; background: #eef6ff; padding: 10px; border-radius: 4px; max-height: 140px; overflow-y: auto; font-size: 14px; }
+    .history p { margin: 4px 0; }
+	
+	.stats { display: flex; flex-direction: column; align-items: center; gap: 5px; font-size: 14px; padding:10px; text-align: center; }
+  .stats-row { display: flex; gap: 10px; align-items: center; }
+  .stats-row span { min-width: 60px; text-align: center; }
+  .stats-row button {
+    padding: 3px 8px;
+    font-size: 14px;
+    cursor: pointer;
+    border: none;
+    border-radius: 4px;
+    background: #ddd;
+  }
+  .stats-row button:hover {
+    background: #ccc;
+  }
+  
+  
+  .goal-icons {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  margin-left: 6px;
+}
+.goal-icons span {
+  cursor: pointer;
+  font-size: 18px;
+}
+
+#fullscreenBtn, #themeToggleBtn{
+	font-size: 16px; 
+	font-weight: bold; 
+	margin-bottom: 10px; 
+	padding: 8px 16px; 
+	border: none; 
+	border-radius: 4px; 
+	cursor: pointer; 
+	background-color: #343a40; 
+	color: white;
+	text-align: center;
+}
+
+.tlcheia{
+	text-align:left;
+	}
+	
+.title{
+margin-left: 25%;
+}
+
+body.dark-mode {
+  background: #121212;
+  color: #f1f1f1;
+}
+
+body.dark-mode .container,
+body.dark-mode .team,
+body.dark-mode .history,
+body.dark-mode .stats > div,
+body.dark-mode .card-counts,
+body.dark-mode .timer-container,
+body.dark-mode ul.player-list {
+  background-color: #1e1e1e;
+  color: #f1f1f1;
+  border-color: #333;
+}
+
+body.dark-mode .highlight-yellow { background-color: #999900; }
+body.dark-mode .highlight-red { background-color: #990000; color: white; }
+body.dark-mode .highlight-substituted { background-color: #005500; color: white; }
+
+body.dark-mode .card-icons .yellow { background: #cccc00; }
+body.dark-mode .card-icons .red { background: #cc0000; }
+
+body.dark-mode button {
+  background-color: #333;
+  color: #f1f1f1;
+}
+
+body.dark-mode button:hover {
+  background-color: #555;
+}
+
+.contador{
+	
+}
+
+  </style>
+</head>
+<body>
+<div class="container">
+
+	<h1 class="tlcheia">
+	  <button id="fullscreenBtn">⛶</button>
+	  <button id="themeToggleBtn">🌙</button>
+	  <span class="title">APP DO NARRADOR</span>
+	</h1>
+
+  <div class="card-counts">
+    <div><span id="teamAName">Equipe A </span>   🟨 <span id="teamAYellowCount">0</span> | 🟥 <span id="teamARedCount">0</span></div>
+	
+	<div class="timer-container">
+		<div id="timerDisplay">00:00</div>
+		<button id="startTimerBtn">Iniciar</button>
+		<button id="pauseTimerBtn">Pausar</button>
+		<button id="resetTimerBtn">Zerar</button>
+	</div>
+	
+    <div><span id="teamBName">Equipe B </span>   🟨 <span id="teamBYellowCount">0</span> | 🟥 <span id="teamBRedCount">0</span></div>
+  </div>
+  
+  <div class="stats">
+  <div style="display: flex; justify-content: space-between; width: 100%; gap: 40px;">
+    <!-- EQUIPE A -->
+    <div style="flex: 1; border: 1px solid #ccc; border-radius: 6px; padding: 10px; background: #f9faff;">
+      <div class="stats-row">
+        <span>Faltas: <span id="teamAFouls">0</span></span>
+        <button onclick="adjustCount('teamAFouls', 1)">+</button>
+        <button onclick="adjustCount('teamAFouls', -1)">−</button>
+      </div>
+      <div class="stats-row">
+        <span>Escanteios: <span id="teamACorners">0</span></span>
+        <button onclick="adjustCount('teamACorners', 1)">+</button>
+        <button onclick="adjustCount('teamACorners', -1)">−</button>
+      </div>
+    </div>
+
+    <!-- EQUIPE B -->
+    <div style="flex: 1; border: 1px solid #ccc; border-radius: 6px; padding: 10px; background: #f9faff;">
+      <div class="stats-row">
+        <span>Faltas: <span id="teamBFouls">0</span></span>
+        <button onclick="adjustCount('teamBFouls', 1)">+</button>
+        <button onclick="adjustCount('teamBFouls', -1)">−</button>
+      </div>
+      <div class="stats-row">
+        <span>Escanteios: <span id="teamBCorners">0</span></span>
+        <button onclick="adjustCount('teamBCorners', 1)">+</button>
+        <button onclick="adjustCount('teamBCorners', -1)">−</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+
+
+
+  <div class="teams">
+    <div class="team">
+      <h3><span id="teamAName1">Equipe A </span> - <span id="teamAGoals">0</span></h3>
+      <strong>Titulares</strong>
+      <ul class="player-list" id="teamAStarters"></ul>
+      <strong>Reservas</strong>
+      <ul class="player-list" id="teamASubs"></ul>
+    </div>
+    <div class="team">
+      <h3><span id="teamBName1">Equipe B </span> - <span id="teamBGoals">0</span></h3>
+      <strong>Titulares</strong>
+      <ul class="player-list" id="teamBStarters"></ul>
+      <strong>Reservas</strong>
+      <ul class="player-list" id="teamBSubs"></ul>
+    </div>
+  </div>
+
+  <div class="undo-container">
+    <button id="undoBtn">↩️ Desfazer Substituição</button>
+  </div>
+  
+  <div class="history" id="goalsLog" style="position: relative;">
+  <h3 style="margin-bottom: 10px;">Gols da Partida</h3>
+  <button id="undoGoalBtn" style="position: absolute; top: 10px; right: 10px; font-size: 14px; font-weight: bold; background-color: #007bff; color: white; border: none; border-radius: 4px; padding: 6px 12px; cursor: pointer;">↩️ Desfazer último gol</button>
+	</div>
+
+
+  <div class="history" id="historyContainer">
+    <h3>Histórico de Substituições</h3>
+    <button id="clearHistoryBtn">Limpar Histórico</button>
+  </div>
+  
+  <div class="file-input-container">
+    <label for="fileInput">Carregar arquivo Excel (.xlsx): </label><br>
+    <input type="file" id="fileInput" accept=".xlsx" />
+  </div>
+  
+  
+</div>
+<script>
+let teamA = { name: 'Equipe A', starters: [], subs: [], yellowCards: new Set(), redCards: new Set(), substitutedPlayers: new Set() };
+let teamB = { name: 'Equipe B', starters: [], subs: [], yellowCards: new Set(), redCards: new Set(), substitutedPlayers: new Set() };
+let selected = {};
+let lastSubstitution = null;
+let timer = null, timerSeconds = 0;
+
+
+<!-- Atualização no renderPlayerList para adicionar bolinha antes do número -->
+function renderPlayerList(players, ul, teamId, type) {
+  ul.innerHTML = '';
+  const team = teamId === 'A' ? teamA : teamB;
+
+  players.forEach((player, idx) => {
+    const li = document.createElement('li');
+    const key = `${type}-${idx}`;
+
+    // Nome do jogador
+    const nameSpan = document.createElement('span');
+    nameSpan.textContent = `${player.number} - ${player.name}`;
+    nameSpan.style.cursor = 'pointer';
+
+    // Container dos gols
+    const goalContainer = document.createElement('span');
+    goalContainer.style.display = 'flex';
+    goalContainer.style.flexDirection = 'row';
+    goalContainer.style.alignItems = 'center';
+    goalContainer.style.gap = '3px';
+    goalContainer.style.marginLeft = '5px';
+	goalContainer.innerHTML = '';
+goalContainer.innerHTML = '';
+(player.riscadas || []).forEach((riscada, i) => {
+  const ball = document.createElement('span');
+  ball.textContent = '⚽';
+  ball.className = 'goal-icon';
+  ball.style.cursor = 'pointer';
+  if (riscada) {
+    ball.style.textDecoration = 'line-through';
+  }
+
+  // Salva o índice para sabermos qual riscar depois
+  ball.dataset.index = i;
+
+  goalContainer.appendChild(ball);
+});
+
+
+
+
+    // Ícone clicável para adicionar gols
+    const goalTrigger = document.createElement('span');
+    goalTrigger.textContent = '⚽';
+	goalTrigger.addEventListener('click', e => {
+	e.stopPropagation();
+	player.goals = (player.goals || 0) ;
+
+  // Pega o tempo atual do cronômetro
+  const tempo = document.getElementById('timerDisplay').textContent;
+  const nome = `${player.number} - ${player.name}`;
+  const equipe = teamId === 'A' ? teamA.name : teamB.name;
+
+  // Cria o parágrafo e adiciona no final
+  const p = document.createElement('p');
+  p.textContent = `${nome} (${equipe}, ${tempo}) GOL`;
+  document.getElementById('goalsLog').appendChild(p);
+  golsRegistrados.push({ teamId, type, index: idx });
+
+
+  renderAll(); // atualiza as bolinhas visuais
+});
+    goalTrigger.style.cursor = 'pointer';
+    goalTrigger.style.marginRight = '5px';
+
+    // Cartões
+    const icons = document.createElement('div');
+    icons.className = 'card-icons';
+
+    ['yellow', 'red'].forEach(color => {
+  const span = document.createElement('span');
+  span.className = color;
+
+  span.addEventListener('click', e => {
+    e.stopPropagation();
+
+    const yellowSet = team.yellowCards;
+    const redSet = team.redCards;
+
+    if (color === 'yellow') {
+      if (yellowSet.has(key)) {
+        // Se já tem amarelo, ao clicar de novo: remove amarelo e adiciona vermelho
+        yellowSet.delete(key);
+        redSet.add(key);
+      } else {
+        yellowSet.add(key);
+      }
+    } else if (color === 'red') {
+      if (redSet.has(key)) {
+        redSet.delete(key);
+      } else {
+        redSet.add(key);
+        yellowSet.delete(key); // Se vermelho for clicado diretamente, remove amarelo
+      }
+    }
+
+    updateCardCount();
+    renderAll();
+  });
+
+  icons.appendChild(span);
+});
+
+
+    // Gol: adicionar nova bolinha à esquerda das existentes
+    goalTrigger.addEventListener('click', e => {
+      e.stopPropagation();
+      const newBall = document.createElement('span');
+newBall.textContent = '⚽';
+newBall.className = 'goal-icon';
+newBall.style.cursor = 'pointer';
+
+      goalContainer.insertBefore(newBall, goalContainer.firstChild);
+	  player.goals = (player.goals || 0) + 1;
+player.riscadas = player.riscadas || [];
+player.riscadas.push(false); // novo gol começa não riscado
+
+renderAll();
+    });
+
+    // Substituição ao clicar no nome
+    nameSpan.addEventListener('click', () => {
+      if (!selected[teamId]) selected[teamId] = {};
+      if (!selected[teamId].starter && type === 'starter') {
+        selected[teamId].starter = idx;
+        li.classList.add('highlight-yellow');
+      } else if (!selected[teamId].sub && type === 'sub') {
+        selected[teamId].sub = idx;
+        realizarSubstituicao(teamId, selected[teamId].starter, selected[teamId].sub);
+        selected[teamId] = {};
+      }
+    });
+
+    // Estilos de destaque
+    if (team.yellowCards.has(key)) li.classList.add('highlight-yellow');
+    if (team.redCards.has(key)) li.classList.add('highlight-red');
+    if (team.substitutedPlayers.has(key)) li.classList.add('highlight-substituted');
+
+    // Organização da linha do jogador
+    const playerWrapper = document.createElement('div');
+    playerWrapper.style.display = 'flex';
+	playerWrapper.style.alignItems = 'center';
+	playerWrapper.style.justifyContent = 'space-between';
+	playerWrapper.style.width = '100%';
+
+
+    playerWrapper.appendChild(goalTrigger);    // ⚽ da esquerda (gatilho)
+    playerWrapper.appendChild(nameSpan);       // Nome do jogador
+    playerWrapper.appendChild(goalContainer);  // ⚽ acumuladas à direita do nome
+    playerWrapper.appendChild(icons);          // Cartões
+
+    li.appendChild(playerWrapper);
+    ul.appendChild(li);
+  });
+}
+
+
+
+function updateCardCount() {
+  document.getElementById('teamAYellowCount').textContent = teamA.yellowCards.size;
+  document.getElementById('teamARedCount').textContent = teamA.redCards.size;
+  document.getElementById('teamBYellowCount').textContent = teamB.yellowCards.size;
+  document.getElementById('teamBRedCount').textContent = teamB.redCards.size;
+}
+
+function renderAll() {
+  document.getElementById('teamAName').textContent = teamA.name;
+  document.getElementById('teamBName').textContent = teamB.name;
+  
+  document.getElementById('teamAName1').textContent = teamA.name;
+  document.getElementById('teamBName1').textContent = teamB.name;
+  
+  renderPlayerList(teamA.starters, document.getElementById('teamAStarters'), 'A', 'starter');
+  renderPlayerList(teamA.subs, document.getElementById('teamASubs'), 'A', 'sub');
+  renderPlayerList(teamB.starters, document.getElementById('teamBStarters'), 'B', 'starter');
+  renderPlayerList(teamB.subs, document.getElementById('teamBSubs'), 'B', 'sub');
+  updateCardCount();
+
+  // NOVO: Atualiza os gols totais
+  document.getElementById('teamAGoals').textContent = teamA.starters.concat(teamA.subs).reduce((sum, p) => sum + (p.goals || 0), 0);
+  document.getElementById('teamBGoals').textContent = teamB.starters.concat(teamB.subs).reduce((sum, p) => sum + (p.goals || 0), 0);
+}
+
+function realizarSubstituicao(teamId, starterIdx, subIdx) {
+  const team = teamId === 'A' ? teamA : teamB;
+  const titular = team.starters[starterIdx];
+  const reserva = team.subs[subIdx];
+  lastSubstitution = { teamId, starterIdx, subIdx };
+  team.substitutedPlayers.add(`starter-${starterIdx}`);
+  const temp = team.starters[starterIdx];
+team.starters[starterIdx] = team.subs[subIdx];
+team.subs[subIdx] = temp;
+team.substitutedPlayers.add(`sub-${subIdx}`); // agora ele é reserva
+
+	const tempo = document.getElementById('timerDisplay').textContent;
+document.getElementById('historyContainer').insertAdjacentHTML('beforeend',
+  `<p>🔁 ${team.name}: ${titular.number} - ${titular.name} ⟶ ${reserva.number} - ${reserva.name} (${tempo})</p>`);
+
+  renderAll();
+}
+
+document.getElementById('undoBtn').addEventListener('click', () => {
+  if (!lastSubstitution) return;
+  const { teamId, starterIdx, subIdx } = lastSubstitution;
+  const team = teamId === 'A' ? teamA : teamB;
+  const reserva = team.starters[starterIdx];
+  const titular = team.subs[subIdx];
+  team.starters[starterIdx] = titular;
+  team.subs[subIdx] = reserva;
+  team.substitutedPlayers.delete(`starter-${starterIdx}`);
+  lastSubstitution = null;
+  renderAll();
+  const history = document.getElementById('historyContainer');
+  history.removeChild(history.lastElementChild);
+});
+
+document.getElementById('clearHistoryBtn').addEventListener('click', () => {
+  document.getElementById('historyContainer').innerHTML = '<h3>Histórico de Substituições</h3><button id="clearHistoryBtn">Limpar Histórico</button>';
+  document.getElementById('clearHistoryBtn').addEventListener('click', () => location.reload());
+});
+
+document.getElementById('fileInput').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = evt => {
+    const data = new Uint8Array(evt.target.result);
+    const workbook = XLSX.read(data, { type: 'array' });
+    carregarDadosExcel(workbook);
+  };
+  reader.readAsArrayBuffer(file);
+});
+
+function carregarDadosExcel(workbook) {
+  const sheet = workbook.Sheets['CONTROLE'];
+  if (!sheet) return alert('Aba "CONTROLE" não encontrada.');
+
+  function getPlayers(numRange, nameRange) {
+    const nums = XLSX.utils.sheet_to_json(sheet, { range: numRange, header: 1 }).flat().filter(Boolean);
+    const names = XLSX.utils.sheet_to_json(sheet, { range: nameRange, header: 1 }).flat().filter(Boolean);
+    return nums.map((n, i) => ({ number: n, name: names[i], goals: 0 }));
+  }
+
+  teamA.name = sheet['B3']?.v || 'Equipe A';
+  teamB.name = sheet['E3']?.v || 'Equipe B';
+  teamA.starters = getPlayers('B11:B21', 'C11:C21');
+  teamA.subs = getPlayers('B22:B35', 'C22:C35');
+  teamB.starters = getPlayers('K11:K21', 'L11:L21');
+  teamB.subs = getPlayers('K22:K35', 'L22:L35');
+  teamA.yellowCards.clear(); teamA.redCards.clear(); teamA.substitutedPlayers.clear();
+  teamB.yellowCards.clear(); teamB.redCards.clear(); teamB.substitutedPlayers.clear();
+  renderAll();
+}
+
+document.getElementById('startTimerBtn').addEventListener('click', () => {
+  if (timer) return;
+  timer = setInterval(() => {
+    timerSeconds++;
+    const min = String(Math.floor(timerSeconds / 60)).padStart(2, '0');
+    const sec = String(timerSeconds % 60).padStart(2, '0');
+    document.getElementById('timerDisplay').textContent = `${min}:${sec}`;
+  }, 1000);
+});
+
+document.getElementById('pauseTimerBtn').addEventListener('click', () => {
+  clearInterval(timer);
+  timer = null;
+});
+
+document.getElementById('resetTimerBtn').addEventListener('click', () => {
+  clearInterval(timer);
+  timer = null;
+  timerSeconds = 0;
+  document.getElementById('timerDisplay').textContent = "00:00";
+  
+});
+
+function adjustCount(id, delta) {
+    const span = document.getElementById(id);
+    let current = parseInt(span.textContent);
+    current = Math.max(0, current + delta);
+    span.textContent = current;
+  }
+	// Armazena histórico de gols para desfazer
+let golsRegistrados = [];
+
+document.getElementById('undoGoalBtn').addEventListener('click', () => {
+  if (golsRegistrados.length === 0) return;
+  const ultimo = golsRegistrados.pop();
+
+  // Remove último <p> do painel de gols
+  const log = document.getElementById('goalsLog');
+  const ps = log.querySelectorAll('p');
+  if (ps.length > 0) {
+    log.removeChild(ps[ps.length - 1]);
+  }
+
+  // Remove uma bolinha ⚽ do jogador correspondente
+  const team = ultimo.teamId === 'A' ? teamA : teamB;
+  const player = team[ultimo.type][ultimo.index];
+  player.goals = Math.max(0, (player.goals || 0) - 1);
+  renderAll();
+});
+
+document.getElementById('fullscreenBtn').addEventListener('click', () => {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(err => {
+      alert(`Erro ao entrar em tela cheia: ${err.message}`);
+    });
+  } else {
+    document.exitFullscreen();
+  }
+});
+
+const fullscreenBtn = document.getElementById('fullscreenBtn');
+
+  fullscreenBtn.addEventListener('click', () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen();
+      fullscreenBtn.textContent = '🗗'; // sair da tela cheia
+    } else {
+      document.exitFullscreen();
+      fullscreenBtn.textContent = '⛶'; // entrar na tela cheia
+    }
+  });
+
+  // Atualiza ícone se o usuário sair/entrar em tela cheia de outra forma
+  document.addEventListener('fullscreenchange', () => {
+    if (!document.fullscreenElement) {
+      fullscreenBtn.textContent = '⛶';
+    } else {
+      fullscreenBtn.textContent = '🗗';
+    }
+  });
+  
+  document.addEventListener('click', function (e) {
+ if (e.target.classList.contains('goal-icon')) {
+  const span = e.target;
+  const li = span.closest('li');
+  const allLis = [...li.parentElement.children];
+  const teamId = li.closest('ul').id.includes('teamA') ? 'A' : 'B';
+  const type = li.closest('ul').id.includes('Starters') ? 'starters' : 'subs';
+  const index = allLis.indexOf(li);
+  const ballIndex = parseInt(span.dataset.index);
+
+  const team = teamId === 'A' ? teamA : teamB;
+  const player = team[type][index];
+
+  // Alterna riscado
+  player.riscadas[ballIndex] = !player.riscadas[ballIndex];
+  renderAll(); // Reatualiza
+}
+
+});
+
+document.getElementById('themeToggleBtn').addEventListener('click', () => {
+  document.body.classList.toggle('dark-mode');
+  const icon = document.getElementById('themeToggleBtn');
+  if (document.body.classList.contains('dark-mode')) {
+    icon.textContent = '☀️'; // modo claro
+  } else {
+    icon.textContent = '🌙'; // modo escuro
+  }
+});
+
+</script>
+</body>
+</html>
