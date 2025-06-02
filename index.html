@@ -701,24 +701,18 @@ document.getElementById('reloadBtn').addEventListener('click', () => {
   document.getElementById('timerDisplay').textContent = "00:00";
 
   // Recarregar planilha automaticamente
-  fetch('https://marivaldoalca.github.io/eureka/DADOS DA PARTIDA.xlsx')
-    .then(response => response.arrayBuffer())
-    .then(data => {
-      const workbook = XLSX.read(data, { type: 'array' });
-      carregarDadosExcel(workbook);
-    })
-    .catch(error => {
-      console.error('Erro ao recarregar o arquivo Excel:', error);
-    });
-});
-
-function limparTudo() {
-  localStorage.clear();
-  document.cookie.split(";").forEach((c) => {
-    document.cookie = c.trim().split("=")[0] + "=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/";
+  const timestamp = new Date().getTime();
+  const excelUrl = `https://marivaldoalca.github.io/eureka/DADOS%20DA%20PARTIDA.xlsx?t=${timestamp}`;
+    fetch(excelUrl)
+  .then(response => response.arrayBuffer())
+  .then(data => {
+    const workbook = XLSX.read(data, { type: 'array' });
+    carregarDadosExcel(workbook);
+  })
+  .catch(error => {
+    console.error('Erro ao recarregar o arquivo Excel:', error);
   });
-  location.reload(true);
-}
+
 
 
 </script>
