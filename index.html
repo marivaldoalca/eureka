@@ -701,7 +701,7 @@ document.getElementById('reloadBtn').addEventListener('click', () => {
   document.getElementById('timerDisplay').textContent = "00:00";
 
   // Recarregar planilha automaticamente
-  fetch('https://marivaldoalca.github.io/eureka/DADOS%20DA%20PARTIDA.xlsx?t=' + new Date().getTime())
+  fetch('https://marivaldoalca.github.io/eureka/DADOS DA PARTIDA.xlsx?t=' + new Date().getTime())
   .then(response => response.arrayBuffer())
   .then(data => {
     const workbook = XLSX.read(data, { type: 'array' });
