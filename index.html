@@ -658,7 +658,8 @@ document.getElementById('themeToggleBtn').addEventListener('click', () => {
 });
 
 window.addEventListener('DOMContentLoaded', () => {
-  fetch('https://marivaldoalca.github.io/eureka/DADOS DA PARTIDA.xlsx')
+  const timestamp = new Date().getTime();
+  fetch(`https://marivaldoalca.github.io/eureka/DADOS%20DA%20PARTIDA.xlsx?t=${timestamp}`)
     .then(response => response.arrayBuffer())
     .then(data => {
       const workbook = XLSX.read(data, { type: 'array' });
@@ -670,18 +671,15 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 document.getElementById('reloadBtn').addEventListener('click', () => {
-  // Limpar cookies
   document.cookie.split(";").forEach(cookie => {
     const eqPos = cookie.indexOf("=");
     const name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
     document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
   });
 
-  // Limpar localStorage e sessionStorage
   localStorage.clear();
   sessionStorage.clear();
 
-  // Resetar variáveis usadas
   teamA = { name: 'Equipe A', starters: [], subs: [], yellowCards: new Set(), redCards: new Set(), substitutedPlayers: new Set() };
   teamB = { name: 'Equipe B', starters: [], subs: [], yellowCards: new Set(), redCards: new Set(), substitutedPlayers: new Set() };
   selected = {};
@@ -691,7 +689,6 @@ document.getElementById('reloadBtn').addEventListener('click', () => {
   clearInterval(timer);
   timer = null;
 
-  // Limpar elementos visuais
   document.getElementById('teamAStarters').innerHTML = '';
   document.getElementById('teamASubs').innerHTML = '';
   document.getElementById('teamBStarters').innerHTML = '';
@@ -700,22 +697,18 @@ document.getElementById('reloadBtn').addEventListener('click', () => {
   document.getElementById('goalsLog').innerHTML = '<h3 style="margin-bottom: 10px;">Gols da Partida</h3><button id="undoGoalBtn" style="position: absolute; top: 10px; right: 10px; font-size: 14px; font-weight: bold; background-color: #007bff; color: white; border: none; border-radius: 4px; padding: 6px 12px; cursor: pointer;">↩️ Desfazer último gol</button>';
   document.getElementById('timerDisplay').textContent = "00:00";
 
-  // Recarregar planilha automaticamente
   const timestamp = new Date().getTime();
-fetch(`https://marivaldoalca.github.io/eureka/DADOS%20DA%20PARTIDA.xlsx?t=${timestamp}`)
-    fetch(excelUrl)
-  .then(response => response.arrayBuffer())
-  .then(data => {
-    const workbook = XLSX.read(data, { type: 'array' });
-    carregarDadosExcel(workbook);
-  })
-      .catch(error => {
-    console.error('Erro ao recarregar o arquivo Excel:', error);
-  });
+  const excelUrl = `https://marivaldoalca.github.io/eureka/DADOS%20DA%20PARTIDA.xlsx?t=${timestamp}`;
+  fetch(excelUrl)
+    .then(response => response.arrayBuffer())
+    .then(data => {
+      const workbook = XLSX.read(data, { type: 'array' });
+      carregarDadosExcel(workbook);
+    })
+    .catch(error => {
+      console.error('Erro ao recarregar o arquivo Excel:', error);
+    });
 });
-
-// ⬆️ ESSE PARENTESES E FECHAMENTO DEVE ESTAR AQUI ⬅️
-// para fechar corretamente o addEventListener('click', ...) do botão reload
 
 </script>
 </body>
