@@ -659,7 +659,8 @@ document.getElementById('themeToggleBtn').addEventListener('click', () => {
 
 window.addEventListener('DOMContentLoaded', () => {
   const timestamp = new Date().getTime();
-  fetch(`https://marivaldoalca.github.io/eureka/DADOS%20DA%20PARTIDA.xlsx?t=${timestamp}`)
+  fetch(`https://marivaldoalca.github.io/eureka/DADOS%20DA%20PARTIDA.xlsx?t=${timestamp}`, { cache: 'reload' })
+
     .then(response => response.arrayBuffer())
     .then(data => {
       const workbook = XLSX.read(data, { type: 'array' });
